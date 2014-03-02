@@ -15,6 +15,13 @@ def is_flush(hand):
     """
     return hand[0][1] == hand[1][1] == hand[2][1] == hand[3][1] == hand[4][1]
 
+def is_straight(hand):
+    pass
+
+def classify_remaining(hand):
+    """Returns if hand is 4/kind, full house, 3/kind, 2 pair, pair, high card
+    """
+    pass
 
 ranks = "23456789tjqka"
 suits = 'cdhs'
@@ -37,19 +44,22 @@ for i in suitIndependentHandsIter:
 
 # 7462 unique hands: len(suitedHands) + len(suitNeutralHands)
 
+# order 7462 hands, and assign each one a unique key 
+# that all equivalent hands reduce to
 
+#if flush:
+    #straight_flush
 
+    #flush
+#else:
+    #four_of_kind
+    
+    #full_house
+    
+    #straight
 
-#
-#straight_flush*
-#four_of_kind
-#full_house
-#flush*
-#straight*
-#three_of_kind
-#two_pair
-#pair
-#high_card*
-
-# *affected by suit
+    #three_of_kind
+    #two_pair
+    #pair
+    #high_card
 
