@@ -3,6 +3,7 @@
 function StaffMember(name, discountPercent){
     this.name = name;
     this.discountPercent = discountPercent;
+    this.totalPurchases = 0;
 }
 
 var joe = new StaffMember("Joe", 5);
@@ -30,7 +31,20 @@ var cashRegister = {
     },
     applyStaffDiscount: function(employee){
         this.total -= this.total * (employee.discountPercent/100);
-    } 
+    },
+    addToStaffTotal: function(employee){
+        employee.totalPurchases += this.total;
+    },
+    resetRegister: function(employee){
+        this.total = 0;
+        this.lastTransactionAmount = 0;
+    },
+    printAndFinalize: function(){
+        // Show the total bill, rounded to two decimal digits
+        console.log('Your bill is '+ cashRegister.total.toFixed(2));
+        // Reset for next patron
+        this.resetRegister();
+    }
 };
 
 cashRegister.scan('chocolate', 2);
@@ -41,7 +55,29 @@ cashRegister.scan('magazine', 3);
 cashRegister.voidLastTransaction();
 
 cashRegister.applyStaffDiscount(sam);
+cashRegister.addToStaffTotal(sam);
 
-// Show the total bill, rounded to two decimal digits
-console.log('Your bill is '+ cashRegister.total.toFixed(2));
+cashRegister.printAndFinalize();
+
+//Check values
+console.log(cashRegister.total, cashRegister.lastTransactionAmount);
+console.log(sam.totalPurchases);
+
+
+//Start new transaction
+cashRegister.scan('chocolate', 3);
+cashRegister.scan('eggs', 4);
+cashRegister.scan('milk', 5);
+cashRegister.scan('magazine', 2);
+
+cashRegister.voidLastTransaction();
+
+cashRegister.applyStaffDiscount(sam);
+cashRegister.addToStaffTotal(sam);
+
+cashRegister.printAndFinalize();
+
+
+console.log(cashRegister.total, cashRegister.lastTransactionAmount);
+console.log(sam.totalPurchases);
 
