@@ -2,12 +2,12 @@
 import itertools
 import random
 
-def draw_hand(numCards = 5):
+def draw_hand(remainingCards, numCards = 5):
     """returns a random hand of numCards cards as a list of tuples (rank, suit)
     example: [('5', 's'), ('t', 'c'), ('7', 'd'), ('3', 'd'), ('3', 'c')]
     200,000 per second
     """
-    return random.sample(deck, numCards)
+    return random.sample(remainingCards, numCards)
 
 def is_flush(hand):
     """returns True if all 5 cards in hand are of the same suit, False otherwise
@@ -17,6 +17,14 @@ def is_flush(hand):
 
 def is_straight(hand):
     pass
+    #possible straights
+    #tree structure: a tree for each rank with that rank as the root.
+    #each child has the possible cards that could form a straight
+    #and so on five total cards deep
+    #iterate throught the ranks in hand.
+    #if the next card is not amoung the child nodes, return False
+    #if a leaf is reached, return True
+    
 
 def classify_remaining(hand):
     """Returns if hand is 4/kind, full house, 3/kind, 2 pair, pair, high card
@@ -41,6 +49,7 @@ for i in suitIndependentHandsIter:
         suitIndependentHands.append(i)
     elif len(set(i)) != 1:
         suitIndependentHands.append(i)
+
 
 # 7462 unique hands: len(suitedHands) + len(suitNeutralHands)
 
