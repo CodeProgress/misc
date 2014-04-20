@@ -1,6 +1,7 @@
 import random
 import pylab
 import collections
+import fractions
 
 # 1D 2048 board simulation
 # initial exploration:
@@ -46,10 +47,51 @@ def sim_games(numSlots, numGames = 100, verbose = False):
     if verbose: print posGames
     return sum(max(x) for x in games)/float(len(games))
 
+def consol(board, memo = {}):
+    """returns none, modifies board in place"""
+    if board in memo:
+        return memo[board]
+    b = list(board)
+    index = len(b) - 1
+    while index > 0:
+        if b[index] == b[index - 1]:
+            b[index - 1] *= 2
+            b.pop(index)
+        index -= 1
+    memo[board] = tuple(b)
+    return memo[board]
+
+
+def exact2048rec(board = tuple(), depth = 0, numSlots = 5, memo = {}):
+    """returns the exact solution as a fraction in lowest terms
+    recursive function with memoization to handle overlapping subproblems
+    """
+    if board in memo: 
+        return memo[board] * 2
+
+    if len(board) >= numSlots:
+        score = max(board)
+        probability = fractions.Fraction(1, 2**depth)
+        return probability * score
+        #print board, depth
+        
+    left = consol(board + (2,))
+    right = consol(board + (4,))
+    
+    memo[left] = exact2048rec(left, depth+1, numSlots)
+    memo[right] = exact2048rec(right, depth+1, numSlots)
+    
+    return  memo[left] + memo[right]
+
+
 #pylab.plot([sim_games(5, 2**x) for x in range(2, 17)])
 #pylab.show()
 
-print sim_games(2, 100000, True)
+numSlots  = 5
+numTrials = 100000
+
+print sim_games(numSlots, numTrials)
+print exact2048rec(numSlots = numSlots)
 
 
 
