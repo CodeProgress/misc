@@ -61,6 +61,31 @@ def consol(board, memo = {}):
     memo[board] = tuple(b)
     return memo[board]
 
+def dfs2048(numSlots):
+    """DFS implementation that is not memoized, returns exact solution
+    once numSlots gets above 4, exponential runtime becomes unreasonable
+    run cProfile on this to appreciate the power of the memo in exact2048rec
+    """
+    outcomes = {}
+    q        = [[(2,), 1],[(4,), 1]] #[[board], depth]
+    while q:
+        pos = q.pop()
+        board = pos[0]
+        depth = pos[1]
+        if len(board) >= numSlots:
+            score = max(board)
+            probability = fractions.Fraction(1, 2**depth)
+            if score in outcomes: outcomes[score] += probability
+            else: outcomes[score] = probability
+        else:
+            for nextPiece in [2,4]:
+                nextBoard = board + (nextPiece, )
+                nextBoard = consol(nextBoard)
+                nextPos = [nextBoard, depth + 1]
+                q.append(nextPos)
+    
+    return sum(x * outcomes[x] for x in outcomes)
+
 
 def exact2048rec(board = tuple(), depth = 0, numSlots = 5, memo = {}):
     """returns the exact solution as a fraction in lowest terms
