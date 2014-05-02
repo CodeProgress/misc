@@ -23,6 +23,16 @@ begin
 SqRoot := Guess;
 end;
 
+//Recursive Fibonacci (not memoized...)
+
+function Fib(n: Integer): LongInt;
+begin
+  if n < 2 then
+    Fib := n
+  else
+   Fib := Fib(n - 1) + Fib(n - 2);
+end;
+
 
 begin
   WriteLn(Fact(0));
@@ -33,5 +43,8 @@ begin
   WriteLn(SqRoot(2, 0.0001));
   WriteLn(SqRoot(64, 0.0001));
   WriteLn(SqRoot(10000, 0.0001));
+  
+  WriteLn(Fib(10)); //55
+  WriteLn(Fib(20)); //6765
 
 end.
