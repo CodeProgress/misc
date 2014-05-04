@@ -3,40 +3,48 @@
 
 import random
 
-def is_collision(shots):
-    if len(shots) < 2: return False
-    return shots[-1] > shots[-2]
-
-def clear_collision(shots):
-    shots.pop()
-    shots.pop()
-
-def sim_shots(numShots = 20, verbose = False):
-    shots = []
-    fired = []
-    for i in range(numShots):
-        shot = random.random()
-        shots.append(shot)
-        fired.append(shot)
-        if is_collision(shots):
-            clear_collision(shots)
+def are_all_gone(shots, numShots):
+    if shots[-1] == 0: 
+        return False                #Last can't be slowest
+    if sum(shots) < numShots/2: 
+        return False                #Need at least half ones for all to cancel
         
-    if verbose: print shots, fired
-    return len(shots) == 0
+    stack = [0]
+    index = 0
+    while index < len(shots):
+        if shots[index] == 0: stack.append(0)
+        else:
+            if len(stack) == 0: stack.append(0)
+            else: stack.pop()
+        index += 1
+    return len(stack) == 0
 
-def sim_trials(numTrials, numShots=20):
+def sim_shots(numShots):
+    shots = [int(round(random.random())) for x in range(numShots-1)]
+    return are_all_gone(shots, numShots)
+
+def sim_trials(numTrials, numShots):
     count = 0.
     for i in xrange(numTrials):
         if sim_shots(numShots):
             count += 1.
     return count/numTrials
 
-print sim_trials(100000, 4)  # Expected = 0.375
-print sim_trials(100000, 6)  # Expected = 0.3125
+#Monte Carlo simulations
+print sim_trials(100000, 2)      # Expected = 0.5
+print sim_trials(100000, 4)      # Expected = 0.375
+print sim_trials(100000, 6)      # Expected = 0.3125
 
 
 """
 Simulation results for 100,000,000 trials
+
+sim_trials(100000000, 2)
+NumShots   = 2
+NumTrials  = 100,000,000
+Expected   = 0.5
+Simulation = 0.50000767
+Dif        = 7.670e-06
 
 
 sim_trials(100000000, 4)
@@ -55,4 +63,3 @@ Simulation = 0.31250537
 Dif        = 5.370e-06
 
 """
-
