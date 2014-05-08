@@ -1,4 +1,5 @@
 import random
+import pylab
 
 def record_to_win_percentage(wins, losses):
     """If win is worth 10, draw worth 4, loss worth 1
@@ -30,7 +31,7 @@ def does_better_team_win(betterTeamWinPercentage, numGames):
             team2wins += 1
     return team1wins > team2wins
 
-def sim_confidence_level(betterTeamWinPercentage, numGames, numSeries = 1000):
+def sim_confidence_level(betterTeamWinPercentage, numGames, numSeries = 100):
     count = 0.
     for i in range(numSeries):
         if does_better_team_win(betterTeamWinPercentage, numGames):
@@ -38,7 +39,18 @@ def sim_confidence_level(betterTeamWinPercentage, numGames, numSeries = 1000):
     
     return count/numSeries
   
+def sim_confidence_levels(betterTeamWinPercentage, numGames, numSeries = 100):
+    games = []
+    count = 0.
+    for i in range(1, numSeries + 1):
+        if does_better_team_win(betterTeamWinPercentage, numGames):
+            count += 1.
+        games.append(count/i)
+    
+    return games
 
+
+    
 ### Example
 
 team1 = (30, 20)
@@ -52,3 +64,12 @@ team1, team2 = norm_percentages(team1, team2)
 print sim_confidence_level(max(team1, team2), 5)
 print sim_confidence_level(max(team1, team2), 7)
 print sim_confidence_level(max(team1, team2), 101)
+
+betterTeamWinPercent = .55
+numSeries = 100
+
+pylab.plot(sim_confidence_levels(betterTeamWinPercent, 7, numSeries))
+pylab.plot([betterTeamWinPercent for i in range(numSeries)])
+
+pylab.show()
+
