@@ -49,7 +49,22 @@ def sim_confidence_levels(betterTeamWinPercentage, numGames, numSeries = 100):
     
     return games
 
+def sim_trials(prob):
+    count = 1
+    while random.random() > prob:
+        count += 1
+    return count
 
+def avg_num_trials_needed(prob, numSims = 10000):
+    numTrials = 0.
+    for i in range(numSims):
+        numTrials += sim_trials(prob)
+    return numTrials/numSims
+
+
+print sim_trials(.01)
+
+print avg_num_trials_needed(.1)
     
 ### Example
 
