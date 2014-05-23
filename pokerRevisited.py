@@ -18,7 +18,7 @@ def is_flush(hand):
 def is_straight(hand):
     pass
     #possible straights
-    #tree structure: a tree for each rank with that rank as the root.
+    #tree structure: root node has all ranks as children
     #each child has the possible cards that could form a straight
     #and so on five total cards deep
     #iterate throught the ranks in hand.
