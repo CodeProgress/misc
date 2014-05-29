@@ -1,8 +1,10 @@
 
 class TicTacToe(object):
-    def __init__(self, edgeLength):
+    def __init__(self, edgeLength = 3, winLength = 3):
+        assert winLength <= edgeLength
         self.edgeLength = edgeLength
         self.board      = self.make_board()
+        self.winLength  = winLength
 
     def make_board(self):
         return [[' ' for row in range(self.edgeLength)] for col in range(self.edgeLength)]
@@ -14,8 +16,17 @@ class TicTacToe(object):
         rows = self.get_rows()
         return map(list, zip(*rows))
     
+    def get_diags(self):
+        #diags = []
+        #for i in range(self.winLength-1, self.edgeLength):
+        #    colNum = 0
+        #    while colNum < i:
+        pass
     def move(self, piece, row, col):
         self.board[row][col] = piece
+    
+    def is_winning_state(self):
+        pass
 
     def __str__(self):
         output = '\n'
@@ -26,7 +37,7 @@ class TicTacToe(object):
         return output
 
 
-board = TicTacToe(3)
+board = TicTacToe()
 
 #example game
 board.move('x', 0, 0)
