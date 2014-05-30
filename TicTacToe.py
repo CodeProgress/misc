@@ -9,19 +9,15 @@ class TicTacToe(object):
     def make_board(self):
         return [[' ' for row in range(self.edgeLength)] for col in range(self.edgeLength)]
 
+    def transpose(self, matrix):
+        return map(list, zip(*matrix))
+
     def get_rows(self):
         return [self.board[x] for x in range(self.edgeLength)]
     
     def get_cols(self):
-        rows = self.get_rows()
-        return map(list, zip(*rows))
+        return self.transpose(self.get_rows())
     
-    def get_diags(self):
-        #diags = []
-        #for i in range(self.winLength-1, self.edgeLength):
-        #    colNum = 0
-        #    while colNum < i:
-        pass
     def move(self, piece, row, col):
         self.board[row][col] = piece
     
