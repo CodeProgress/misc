@@ -1,5 +1,4 @@
-#Code relates to a challenge that is currently in progress... To avoid spoilers,
-#problem description will be uploaded after submission deadline
+#See IBMponderThisMay2014.py
 
 import random
 
