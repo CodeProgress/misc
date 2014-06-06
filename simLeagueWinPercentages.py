@@ -1,4 +1,5 @@
 import random
+import pylab
 
 def win_percentage(numWins, numLosses):
     denom = float(numWins+numLosses)
@@ -61,3 +62,9 @@ print "{} percent of the league had a winning record.".format(
 best, worst = best_worst_win_percentage(numTeams, 1000)      
 print "The best team's winning percentage was {}".format(best)
 print "The worst team's winning percentage was {}".format(worst)
+
+for i in range(100):
+    example  = play_season(numTeams)
+    pylab.scatter([x[0] for x in sorted(example)], [y[1] for y in example])
+
+pylab.show()
