@@ -12,17 +12,18 @@ def update_team_records(team1, team2):
     team2[1] += 1
     
 
-def play_season(numTeams):
+def play_season(numTeams, numGames = 1):
     """If a season consists of every team playing every other team once
     returns a list of all team records"""
     teams = [[0,0] for x in range(numTeams)]
-
-    for i in range(numTeams):
-        for j in range(i+1, numTeams):
-            if random.random() < .5:
-                update_team_records(teams[i], teams[j])
-            else:
-                update_team_records(teams[j], teams[i])
+    
+    for game in range(numGames):
+        for i in range(numTeams):
+            for j in range(i+1, numTeams):
+                if random.random() < .5:
+                    update_team_records(teams[i], teams[j])
+                else:
+                    update_team_records(teams[j], teams[i])
     return teams
 
 def is_over_500(team):
@@ -48,7 +49,6 @@ def best_worst_win_percentage(numTeams, numSeasons):
     return best, worst
 
 
-
 numTeams = 32
 example  = play_season(numTeams)
 
@@ -59,12 +59,17 @@ assert abs(sum(win_percentage(*x) for x in example) - numTeams/2.) < 10e-10
 print "{} percent of the league had a winning record.".format(
             percent_with_winning_season(play_season(numTeams))*100)
 
-best, worst = best_worst_win_percentage(numTeams, 1000)      
+best, worst = best_worst_win_percentage(numTeams, 100)      
 print "The best team's winning percentage was {}".format(best)
 print "The worst team's winning percentage was {}".format(worst)
 
-for i in range(100):
-    example  = play_season(numTeams)
-    pylab.scatter([x[0] for x in sorted(example)], [y[1] for y in example])
+#for i in range(10):
+#    example  = play_season(numTeams)
+#    pylab.hist([x[0] for x in example])
+
+numGames = 200
+for i in range(1, 10):
+    pylab.scatter([x[0] for x in play_season(numGames, i)], range(numGames))
+    pylab.hist([x[0] for x in play_season(numGames, i)])
 
 pylab.show()
