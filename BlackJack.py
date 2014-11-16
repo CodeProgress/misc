@@ -30,18 +30,21 @@ class Player(object):
         self.reset_hand()
         
     def reset_hand(self):
-        self.hand = {}
+        self.hand = []
         
     def add_to_hand(self, card):
-        if self.hand[card]: self.hand[card] += 1
-        else: self.hand[card] = 1
+        self.hand.append(card)
         
 class Dealer(Player):
     pass
 
 class BlackJack(object):
-    def __init__(self, Deck):
-        self.deck = Deck()
+    def __init__(self, Deck, numPlayers):
+        self.deck = Deck
+        self.dealer = Dealer()
+        self.players = []
+        for player in range(numPlayers):
+            self.players.append(Player())
         
         # point values
         lowCardValues     = {str(lowCard):lowCard for lowCard in range(2, 10)}
