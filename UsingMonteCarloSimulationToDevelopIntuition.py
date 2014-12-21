@@ -37,22 +37,22 @@ def prob_framework(condition1, condition2, numTrials = 1000000):
                 observedNumOutcomes += 1
     return observedNumOutcomes/totalNumOutcomes
 
-def prob_of_both_even_if_one_even(numTrials = 1000000):
+def prob_of_both_even_if_one_even():
     condition1 = lambda roll: roll[0] % 2 == 0 or roll[1] % 2 == 0
     condition2 = lambda roll: sum(roll) % 2 == 0 # now test if the sum is even, if it's not then the other one is odd
     return prob_framework(condition1, condition2)
     
-def prob_sum_odd_if_one_even(numTrials = 1000000):
+def prob_sum_odd_if_one_even():
     condition1 = lambda roll: roll[0] % 2 == 0 or roll[1] % 2 == 0
     condition2 = lambda roll: sum(roll) % 2 != 0
     return prob_framework(condition1, condition2)
  
-def prob_of_both_3_if_one_3(numTrials = 1000000):
+def prob_of_both_3_if_one_3():
     condition1 = lambda roll: roll[0] == 3 or roll[1] == 3
     condition2 = lambda roll: sum(roll) == 6
     return prob_framework(condition1, condition2)      
    
-def prob_one_even_if_one_3(numTrials = 1000000):
+def prob_one_even_if_one_3():
     condition1 = lambda roll: roll[0] == 3 or roll[1] == 3
     condition2 = lambda roll: sum(roll) % 2 != 0
     return prob_framework(condition1, condition2)
