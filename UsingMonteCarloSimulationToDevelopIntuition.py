@@ -44,7 +44,7 @@ def prob_framework(condition1, condition2, numDice = 2, numTrials = 1000000):
                 observedNumOutcomes += 1
     return observedNumOutcomes/totalNumOutcomes
 
-def enumation_framework(condition1, condition2, numDice = 2):
+def enumeration_framework(condition1, condition2, numDice = 2):
     allDice = [FAIR_DIE for _ in xrange(numDice)]
     possibleOutcomes = itertools.product(*allDice)
     numOutcomesSatisfyingCondition1 = 0
@@ -61,40 +61,45 @@ def enumation_framework(condition1, condition2, numDice = 2):
 def prob_of_both_even_if_one_even():
     condition1 = lambda roll: roll[0] % 2 == 0 or roll[1] % 2 == 0
     condition2 = lambda roll: sum(roll) % 2 == 0 # now test if the sum is even, if it's not then the other one is odd
+    print enumeration_framework(condition1, condition2)
     return prob_framework(condition1, condition2)
 
 # b)     
 def prob_sum_odd_if_one_even():
     condition1 = lambda roll: roll[0] % 2 == 0 or roll[1] % 2 == 0
     condition2 = lambda roll: sum(roll) % 2 != 0
+    print enumeration_framework(condition1, condition2)
     return prob_framework(condition1, condition2)
 
 # c)
 def prob_of_both_3_if_one_3():
     condition1 = lambda roll: roll[0] == 3 or roll[1] == 3
     condition2 = lambda roll: sum(roll) == 6
+    print enumeration_framework(condition1, condition2)
     return prob_framework(condition1, condition2)      
 
 # d) 
 def prob_one_even_if_one_3():
     condition1 = lambda roll: roll[0] == 3 or roll[1] == 3
     condition2 = lambda roll: sum(roll) % 2 != 0
+    print enumeration_framework(condition1, condition2)
     return prob_framework(condition1, condition2)
 
 # e)
 def prob_one_3_if_one_1_and_one_2():
     condition1 = lambda roll: 1 in roll and 2 in roll
     condition2 = lambda roll: sum(roll) == 6
+    print enumeration_framework(condition1, condition2)
     return prob_framework(condition1, condition2, 3)
 
 # f)
 def prob_all_same_if_two_same():
     condition1 = lambda roll: len(set(roll)) <= 2
     condition2 = lambda roll: len(set(roll)) == 1
-    print enumation_framework(condition1, condition2, 3)
+    print enumeration_framework(condition1, condition2, 3)
     return prob_framework(condition1, condition2, 3)
                   
-#print prob_of_both_even_if_one_even()
+print prob_of_both_even_if_one_even()
 # a) Actual: 1/3   Experimental: 0.333863120164   Deviation: 0.0005297868306666786
 
 #print prob_sum_odd_if_one_even()
