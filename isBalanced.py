@@ -7,15 +7,14 @@ def isBalanced(aString):
         if i in openings: 
             stack.append(i)
         elif i in closings:
-            if not stack: 
+            if stack == []: 
                 return False
             possibleMatch = stack.pop()
             if closings[i] != possibleMatch: 
                 return False
     
-    return not stack
-    
-
+    return stack == []
+            
 #True
 test0 = "()"
 test1 = "(this) is (((a))) {(())} test"
@@ -26,9 +25,14 @@ test3 = "(this) is (((a))) {(())} test{{(([[([{}])]]))}}("
 test4 = "{"
 test5 = "(((((((((((((((((((((((((((((((((((((((((((((((()"
 
-assert isBalanced(test0)
-assert isBalanced(test1)
-assert isBalanced(test2)
-assert not isBalanced(test3)
-assert not isBalanced(test4)
-assert not isBalanced(test5)
+
+def test_balanced_function(aFunction):
+    assert aFunction(test0)
+    assert aFunction(test1)
+    assert aFunction(test2)
+    assert not aFunction(test3)
+    assert not aFunction(test4)
+    assert not aFunction(test5)
+    
+test_balanced_function(isBalanced)
+
