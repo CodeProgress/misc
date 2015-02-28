@@ -18,6 +18,17 @@ class TicTacToe(object):
     def get_cols(self):
         return self.transpose(self.get_rows())
     
+    #def get_diags(self):
+    #    diags = []
+    #    for i in range(self.edgeLength):
+    #        temp = 0
+    #        diag = []
+    #        while temp <= i:
+    #            diag.append(self.board[temp][i-temp])
+    #            temp += 1
+    #        diags.append(diag)
+    #    return diags 
+    
     def move(self, piece, row, col):
         self.board[row][col] = piece
     
