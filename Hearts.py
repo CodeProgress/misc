@@ -12,10 +12,7 @@ class Card(object):
 
 class Deck(object):
     def __init__(self):
-        RANKS = list('23456789TJQKA')
-        SUITS = list('hscd')
-        self.deck = [Card(suit, rank) for suit, rank in itertools.product(RANKS, SUITS)]
-        self.shuffle_deck()
+        self.deck = self.build_new_shuffled_deck()
     
     def shuffle_deck(self):
         random.shuffle(self.deck)
@@ -24,13 +21,19 @@ class Deck(object):
         assert self.deck
         return self.deck.pop()
     
+    def build_new_shuffled_deck(self):
+        RANKS = list('23456789TJQKA')
+        SUITS = list('hscd')
+        deck = [Card(suit, rank) for suit, rank in itertools.product(RANKS, SUITS)]
+        random.shuffle(deck)
+        return deck
     
 class Hand(object):
     def __init__(self):
         self.hand = {'h':set(), 's':set(), 'c':set(), 'd':set()}
    
     def is_suit_in_hand(self, suit):
-        return card.suit in self.hand 
+        return suit in self.hand 
       
     def is_card_in_hand(self, card):
         if not self.is_suit_in_hand(card.suit): 
@@ -58,20 +61,105 @@ class Hand(object):
     
 class Scoring(object):
     def __ini__(self):
-        pass
-
+        self.HEART_POINT_VALUE = 1
+        self.QUEEN_OF_SPADES_POINT_VALUE = 13
+        self.VALUE_OF_ALL_POINTS = (self.HEART_POINT_VALUE * 13) + self.QUEEN_OF_SPADES_POINT_VALUE
+        self.SHOOT_THE_MOON_SCORE = -26
+    
+    def score_hearts(self, Hand):
+        return len(Hand['h']) * self.HEART_POINT_VALUE
+    
+    def score_queen_of_spaces(self, Hand):
+        if self.contains_queen_of_spades(Hand):
+            return self.QUEEN_OF_SPADES_POINT_VALUE
+        else:
+            return 0
+    
+    def contains_queen_of_spades(Hand):
+        return 'Q' in Hand['s']
+    
+    def is_moon_shot(self, score):
+        return score == self.VALUE_OF_ALL_POINTS
+    
+    def score_hand(self, Hand):
+        score = 0
+        score += self.score_hearts(Hand)
+        score += self.score_queen_of_spaces(Hand)
+        
+        if self.is_moon_shot(score): 
+            return self.SHOOT_THE_MOON_SCORE
+            
+        return score
     
 class Player(object):
     def __init__(self):
         self.score = 0
         self.hand = Hand()
-    
+        self.discardPile = Hand()
 
+
+class PassingCards(object):
+    def __init__(self, Players):
+        self.passingDirections = ['left', 'right', 'accross', 'keep']
+        self.currentPassingDirection = 0
+        
+    def change_pass_direction(self):
+        self.currentPassignDirection += 1
+        self.currentPassingDirection %= len(self.passingDirections)
+    
+    def is_passing_round(self):
+        return self.currentPassingDirection != 3
+    
+    def pass_cards_left(self):
+        pass
+    
+    def pass_cards_right(self):
+        pass
+    
+    def pass_cards_across(self):
+        pass
+    
+    def pass_cards(self, direction):
+        pass            
+    
+    def facilitate_passing_cards(self):
+        if self.is_passing_round():
+            # select three cards
+            # pass
+            pass
+        
+    
 class Hearts(object):
-   def __init__(self):
-       NUM_PLAYERS = 4
-       self.players = [Player() for player in range(NUM_PLAYERS)]
-      
+    def __init__(self):
+        NUM_PLAYERS = 4
+        self.players = [Player() for player in xrange(NUM_PLAYERS)]
+        self.handsPlayed = []
+        # singleton classes:
+        self.Scoring = Scoring()
+        self.Passing = PassingCards(self.players)
+    
+    def play_game(self):
+        pass
+        
+    def play_round(self):
+        pass
+    
+    def play_hand(self):
+        pass
+    
+    
+    '''
+    Concept inventory:
+        Select three cards
+        Direction to pass cards
+            left, right, across, keep
+        
+        
+        
+    '''
+    
+    
+    
        
          
 # invariants to test for when testing mode is on
