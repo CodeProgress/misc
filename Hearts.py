@@ -42,6 +42,14 @@ class Hand(object):
             return False
         return True
     
+    def remove_token_card_for_testing(self):
+        for suit in self.hand.keys():
+            try:
+                return Card(self.hand[suit].pop(), suit)
+            except KeyError:
+                continue
+        raise(KeyError, 'There are no cards in the hand')
+    
     def remove_card(self, card):
         assert self.is_card_in_hand(card)
         self.hand[card.suit].remove(card.rank)
@@ -99,16 +107,31 @@ class Player(object):
 
 
 class PassingCards(object):
-    def __init__(self, Players):
-        self.passingDirections = ['left', 'right', 'accross', 'keep']
+    def __init__(self):
+        self.passingVariants = [
+            self.pass_cards_left,
+            self.pass_cards_right,
+            self.pass_cards_across,
+            lambda :None]
         self.currentPassingDirection = 0
+        self.Players = []
         
     def change_pass_direction(self):
-        self.currentPassignDirection += 1
+        self.currentPassingDirection += 1
         self.currentPassingDirection %= len(self.passingDirections)
     
     def is_passing_round(self):
         return self.currentPassingDirection != 3
+    
+    def all_players_select_three_cards(self):
+        for player in self.Players:
+            self.select_three_cards(player)
+    
+    def select_three_cards(self, Player):
+        # User interaction
+        cards = []
+        for _ in range(3):
+            cards.append(Player.remove_token_card_for_testing())
     
     def pass_cards_left(self):
         pass
@@ -122,11 +145,13 @@ class PassingCards(object):
     def pass_cards(self, direction):
         pass            
     
-    def facilitate_passing_cards(self):
+    def facilitate_passing_cards(self, Players):
         if self.is_passing_round():
+            self.Players = Players
             # select three cards
-            # pass
+            self.passingVariants[self.passingDirection]()
             pass
+        self.Players = []
         
     
 class Hearts(object):
@@ -159,8 +184,6 @@ class Hearts(object):
     '''
     
     
-    
-       
          
 # invariants to test for when testing mode is on
 '''
