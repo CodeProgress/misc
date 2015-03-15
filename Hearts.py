@@ -6,14 +6,15 @@ class Card(object):
     def __init__(self, rank, suit):
         self.rank = rank
         self.suit = suit
-
+    
     def __str__(self):
         return self.rank + self.suit
 
 class Deck(object):
     def __init__(self):
-        self.deck = self.build_new_deck()
-        self.cardRankings = self.create_card_rankings(self.deck)
+        self.orderedDeck  = self.build_ordered_deck()
+        self.cardRankings = self.create_card_rankings(self.orderedDeck)
+        self.deck = self.orderedDeck
         self.shuffle_deck()
     
     def shuffle_deck(self):
@@ -24,12 +25,21 @@ class Deck(object):
         return self.deck.pop()
     
     def create_card_rankings(self, deck):
-        return dict(enumerate(deck))
+        return dict(zip(deck, range(1, 53, -1)))   # {card(2, 'h'): 52, card(3, 'h'):51, ...}
     
-    def build_new_deck(self):
+    def build_ordered_deck(self):
         RANKS = list('23456789TJQKA')
         SUITS = list('hscd')
         return [Card(suit, rank) for suit, rank in itertools.product(RANKS, SUITS)]
+    
+    def reset_deck(self):
+        self.deck = self.orderedDeck
+        self.shuffle_deck()
+    
+    def get_ranking_of_card(self, declaredSuit, card):
+        if card.suit != declaredSuit:
+            return 0
+        return self.cardRankings[card]    
     
 class Hand(object):
     def __init__(self):
@@ -73,6 +83,9 @@ class Hand(object):
     def add_cards(self, cards):
         for card in cards:
             self.add_card(card)
+    
+    def reset(self):
+        self.hand = {'h':{}, 's':{}, 'c':{}, 'd':{}}
             
     
 class Scoring(object):
@@ -109,11 +122,15 @@ class Scoring(object):
         return score
     
 class Player(object):
-    def __init__(self):
+    def __init__(self, playerNumber):
+        self.playerNumber = playerNumber
         self.score = 0
         self.hand = Hand()
         self.pileOfCardsWon = Hand()
         self.passPile = []
+    
+    def add_cards_to_won_pile(self, cards):
+        self.pileOfCardsWon.add_cards(cards)
         
     def add_cards_to_pass_pile(self, cards):
         assert self.passPile == []
@@ -124,14 +141,37 @@ class Player(object):
         self.passPile = []
         return tempCards
         
-    def play_card(self, suit):
-        # User interaction
-        self.play_card_for_testing(suit)
+    def get_suit_of_hand_current_turn(self, cardsAlreadyPlayed):
+        isSuitDetermined = len(cardsAlreadyPlayed) > 0 
+        if isSuitDetermined:
+            suit = cardsAlreadyPlayed[0].suit
+        else:
+            suit = None
+        return suit
         
-    def play_card_for_testing(self, suit):
-        if len(self.hand[suit]) > 0:
+    def check_if_legal_selection(self, suit, selectedCardToPlay):
+         if suit and selectedCardToPlay.suit != suit:
+            if self.hand.is_suit_in_hand(suit):
+                raise(ValueError, 'You must select a {} if you have a {}'.format(suit, suit))
+    
+    def play_card(self, cardsAlreadyPlayed):
+        # User interaction
+        suit               = self.get_suit_of_hand_current_turn(cardsAlreadyPlayed)               
+        selectedCardToPlay = self.get_card_for_testing(suit)  # change this for different strategies or player interaction
+        
+        self.check_if_legal_selection(suit, selectedCardToPlay)
+        
+        return selectedCardToPlay
+        
+    def get_card_for_testing(self, suit):
+        if suit and self.hand.is_suit_in_hand(suit):
             return self.hand.get_token_suit_card_for_tesing()
         return self.hand.get_token_card_for_testing()
+    
+    def reset_for_next_round(self):
+        self.hand.reset()
+        self.pileOfCardsWon.reset()
+        self.passPile = []
 
 class PassingCards(object):
     def __init__(self):
@@ -217,41 +257,87 @@ class Hearts(object):
         # constants
         self.NUM_PLAYERS = 4
         self.twoOfClubs = Card('2', 'c')
+        self.endingConditionNumberOfPoints = 100
         
         # class variables
-        self.players = [Player() for player in xrange(self.NUM_PLAYERS)]
-        self.playerToMove = 0
+        self.players = [Player(playerNumber) for playerNumber in xrange(self.NUM_PLAYERS)]
+        self.playerWhoStartsHand = 0
         self.turnPile = []
         self.turnOrderings = self.create_turn_orderings()
+        self.currentHandNumber = 1
         
         # singleton classes:
+        self.Deck    = Deck()
         self.Scoring = Scoring()
         self.Passing = PassingCards()
     
+    def reset_for_next_round(self):
+        self.Deck.reset_deck()
+        for player in self.players:
+            player.reset_for_next_round()
+        self.turnPile = []
+        self.currentHandNumber = 1
+    
+    def is_game_over(self):
+        return max([player.score for player in self.players]) < self.endingConditionNumberOfPoints
+            
     def play_game(self):
-        pass
+        while not self.is_game_over():
+            self.play_round()
+            for player in sorted(self.players, key = lambda : self.players.score):
+                print 'Player {} score: {}'.formate(player.playerNumber, player.score)
         
     def play_round(self):
-        self.Passing.execute_passing_phase(self.players)
-        self.play_first_hand()
+        self.reset_for_next_round()
+        self.play_all_hands_of_round()
         pass
+        
+    def get_winning_card(self):
+        assert self.turnPile
+        firstCardPlayed = self.turnPile[0]
+        declaredSuit = firstCardPlayed.suit
+        return sorted(self.turnPile, key = lambda card: self.Deck.get_ranking_of_card(declaredSuit, card))[-1]
     
     def get_position_of_winning_card(self):
-        position = 0
-        highestCardSoFar = self.turnPile[0]
-        turnSuit = self.turnPile[0].suit
-        
+        winningCard = self.get_winning_card()
+        return self.turnPile.index(winningCard)
     
+    def get_winning_player_number(self, winningCardPosition):
+        orderOfPlayersForThisHand = self.turnOrderings[self.playerWhoStartsHand]        
+        return orderOfPlayersForThisHand[winningCardPosition]    
+        
+    def get_winning_player_of_hand(self):
+        winningCardPosition = self.get_position_of_winning_card()
+        winningPlayerPosition = self.get_position_of_winning_player(winningCardPosition)
+        winningPlayer = self.players[winningPlayerPosition]
+        assert winningPlayer.playerPosition == winningPlayerPosition
+        return winningPlayer
+    
+    def play_all_four_cards_of_hand(self):
+        for positionOfCurrentPlayerToMove in self.turnOrderings[self.playerWhoStartsHand]:
+            currentPlayerToMove = self.players[positionOfCurrentPlayerToMove]
+            selectedCard = currentPlayerToMove.play_card(self.turnPile)
+            self.turnPile.append(selectedCard)
+            
     def play_hand(self):
-        for playerNumber in self.turnOrderings[self.playerToMove]:
-            self.players[playerNumber].play_card()
-                  
-        pass
+        self.currentHandNumber += 1
+        self.play_all_four_cards_of_hand()
+        winningPlayer = self.get_winning_player_of_hand()
+        winningPlayer.add_cards_to_won_pile(self.turnPile)
+        self.playerWhoStartsHand = winningPlayer.playerNumber
         
     def play_first_hand(self):
-        self.playerToMove = self.get_position_of_player_with_two_of_clubs()
+        self.Passing.execute_passing_phase(self.players)
+        self.playerWhoStartsHand = self.get_position_of_player_with_two_of_clubs()
         self.play_hand()
-        pass
+
+    def play_remaining_hands(self):
+        while self.currentRoundNumber <= 13:
+            self.play_hand()
+    
+    def play_all_hands_of_round(self):
+        self.play_first_hand()
+        self.play_remaining_hands()
 
     def get_position_of_player_with_two_of_clubs(self):
         for playerNumber in range(self.NUM_PLAYERS):
@@ -273,7 +359,7 @@ class Tests(object):
         self.deck          = Deck()
         self.hand          = Hand()
         self.scoring       = Scoring()
-        self.player        = Player()
+        self.player        = Player(0)
         self.passingCards  = PassingCards()
         self.hearts        = Hearts()
     
@@ -296,3 +382,10 @@ at the end of every round,
             left, right, across, keep
         
 '''
+
+'''
+    To do:
+        Clean up terminology: Hand vs Round     
+        
+'''
+
