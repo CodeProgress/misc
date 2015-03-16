@@ -1,6 +1,7 @@
 # Hearts
 import itertools
 import random
+import cProfile
 
 class Card(object):
     def __init__(self, rank, suit):
@@ -10,22 +11,18 @@ class Card(object):
     def __str__(self):
         return self.rank + self.suit
 
+
 class Deck(object):
     def __init__(self):
         self.orderedDeck  = self.build_ordered_deck()
-        self.cardRankings = self.create_card_rankings(self.orderedDeck)
+        self.cardRankings = {}
+        self.create_card_rankings()
         self.deck = self.orderedDeck
         self.shuffle_deck()
-    
-    def shuffle_deck(self):
-        random.shuffle(self.deck)
     
     def deal_one_card(self):
         assert self.deck
         return self.deck.pop()
-    
-    def create_card_rankings(self, deck):
-        return dict(zip(deck, range(1, 53, -1)))   # {card(2, 'h'): 52, card(3, 'h'):51, ...}
     
     def build_ordered_deck(self):
         RANKS = list('23456789TJQKA')
@@ -33,20 +30,34 @@ class Deck(object):
         return [Card(suit, rank) for suit, rank in itertools.product(RANKS, SUITS)]
     
     def reset_deck(self):
-        self.deck = self.orderedDeck
+        self.deck = self.orderedDeck[::]
         self.shuffle_deck()
-    
+
+    def shuffle_deck(self):
+        random.shuffle(self.deck)
+
+    def create_card_rankings(self):
+        value = 52
+        for card in self.orderedDeck:
+            self.cardRankings[card] = value
+            value -= 1
+        # {card(2, 'h'): 52, card(3, 'h'):51, ...}
+
     def get_ranking_of_card(self, declaredSuit, card):
         if card.suit != declaredSuit:
             return 0
         return self.cardRankings[card]    
-    
+
+    def get_num_cards_in_deck(self):
+        return len(self.deck)
+
+
 class Hand(object):
     def __init__(self):
-        self.hand = {'h':{}, 's':{}, 'c':{}, 'd':{}} 
+        self.hand = {'h': {}, 's': {}, 'c': {}, 'd': {}}
     
     def is_suit_in_hand(self, suit):
-        return suit in self.hand 
+        return len(self.hand[suit]) > 0
       
     def is_card_in_hand(self, card):
         if not self.is_suit_in_hand(card.suit): 
@@ -61,7 +72,7 @@ class Hand(object):
                 return self.hand[suit].popitem()[-1]
         raise(KeyError, 'There are no cards in the hand')
     
-    def get_token_suit_card_for_tesing(self, suit):
+    def get_token_suit_card_for_testing(self, suit):
         return self.hand[suit].popitem()[-1]
     
     def get_card(self, card):
@@ -83,43 +94,47 @@ class Hand(object):
     def add_cards(self, cards):
         for card in cards:
             self.add_card(card)
+
+    def count_hearts(self):
+        return len(self.hand['h'])
     
     def reset(self):
-        self.hand = {'h':{}, 's':{}, 'c':{}, 'd':{}}
+        self.hand = {'h': {}, 's': {}, 'c': {}, 'd': {}}
             
     
 class Scoring(object):
-    def __ini__(self):
+    def __init__(self):
         self.HEART_POINT_VALUE = 1
         self.QUEEN_OF_SPADES_POINT_VALUE = 13
         self.VALUE_OF_ALL_POINTS = (self.HEART_POINT_VALUE * 13) + self.QUEEN_OF_SPADES_POINT_VALUE
         self.SHOOT_THE_MOON_SCORE = -26
         self.QUEEN_OF_SPADES = Card('Q', 's')
     
-    def score_hearts(self, Hand):
-        return len(Hand['h']) * self.HEART_POINT_VALUE
+    def score_hearts(self, hand):
+        return hand.count_hearts() * self.HEART_POINT_VALUE
     
-    def score_queen_of_spaces(self, Hand):
-        if self.contains_queen_of_spades(Hand):
+    def score_queen_of_spaces(self, hand):
+        if hand.is_card_in_hand(self.QUEEN_OF_SPADES):
             return self.QUEEN_OF_SPADES_POINT_VALUE
         else:
             return 0
     
-    def contains_queen_of_spades(self, Hand):
-        return Hand.is_card_in_hand(self.QUEEN_OF_SPADES)
+    def contains_queen_of_spades(self, hand):
+        return hand.is_card_in_hand(self.QUEEN_OF_SPADES)
     
     def is_moon_shot(self, score):
         return score == self.VALUE_OF_ALL_POINTS
     
-    def score_hand(self, Hand):
+    def score_hand(self, hand):
         score = 0
-        score += self.score_hearts(Hand)
-        score += self.score_queen_of_spaces(Hand)
+        score += self.score_hearts(hand)
+        score += self.score_queen_of_spaces(hand)
         
         if self.is_moon_shot(score): 
             return self.SHOOT_THE_MOON_SCORE
             
         return score
+
     
 class Player(object):
     def __init__(self, playerNumber):
@@ -128,13 +143,20 @@ class Player(object):
         self.hand = Hand()
         self.pileOfCardsWon = Hand()
         self.passPile = []
-    
+
+    def add_card_to_hand(self, card):
+        self.hand.add_card(card)
+
+    def add_cards_to_hand(self, cards):
+        self.hand.add_cards(cards)
+
     def add_cards_to_won_pile(self, cards):
         self.pileOfCardsWon.add_cards(cards)
         
     def add_cards_to_pass_pile(self, cards):
         assert self.passPile == []
-        self.passPile.append(cards)
+        for card in cards:
+            self.passPile.append(card)
         
     def get_cards_from_pass_pile(self):
         tempCards = self.passPile
@@ -157,7 +179,7 @@ class Player(object):
     def play_card(self, cardsAlreadyPlayed):
         # User interaction
         suit               = self.get_suit_of_hand_current_turn(cardsAlreadyPlayed)               
-        selectedCardToPlay = self.get_card_for_testing(suit)  # change this for different strategies or player interaction
+        selectedCardToPlay = self.get_card_for_testing(suit)  # change this for different strategies
         
         self.check_if_legal_selection(suit, selectedCardToPlay)
         
@@ -165,7 +187,7 @@ class Player(object):
         
     def get_card_for_testing(self, suit):
         if suit and self.hand.is_suit_in_hand(suit):
-            return self.hand.get_token_suit_card_for_tesing()
+            return self.hand.get_token_suit_card_for_testing(suit)
         return self.hand.get_token_card_for_testing()
     
     def reset_for_next_round(self):
@@ -176,9 +198,9 @@ class Player(object):
 class PassingCards(object):
     def __init__(self):
         self.passingVariants = [
-            self.left_pass_pairings,
-            self.right_pass_pairings,
-            self.across_pass_pairings,
+            self.get_left_pass_pairings(),
+            self.get_right_pass_pairings(),
+            self.get_across_pass_pairings(),
             []]
         self.currentPassingDirection = 0
         self.noPassingRoundNum = 3
@@ -186,7 +208,7 @@ class PassingCards(object):
         
     def change_pass_direction(self):
         self.currentPassingDirection += 1
-        self.currentPassingDirection %= len(self.passingDirections)
+        self.currentPassingDirection %= len(self.passingVariants)
     
     def is_passing_round(self):
         return self.currentPassingDirection != self.noPassingRoundNum
@@ -200,11 +222,12 @@ class PassingCards(object):
         # User interaction
         cards = []
         for _ in range(3):
-            cards.append(Player.get_token_card_for_testing())
+            cards.append(Player.hand.get_token_card_for_testing())
         Player.add_cards_to_pass_pile(cards)
     
     def pass_cards_from_to(self, fromPlayer, toPlayer):
-        toPlayer.hand.add_cards(fromPlayer.get_cards_from_pass_pile)
+        cardsToPass = fromPlayer.get_cards_from_pass_pile()
+        toPlayer.add_cards_to_hand(cardsToPass)
     
     def map_pass_pairings(self, passPairings):
         for pairing in passPairings:
@@ -212,29 +235,29 @@ class PassingCards(object):
             toPlayer = self.players[pairing[1]]
             self.pass_cards_from_to(fromPlayer, toPlayer)
     
-    def left_pass_pairings(self):
+    def get_left_pass_pairings(self):
         return [
-            (0,1),
-            (1,2),
-            (2,3),
-            (3,0)]
+            (0, 1),
+            (1, 2),
+            (2, 3),
+            (3, 0)]
     
-    def right_pass_pairings(self):
+    def get_right_pass_pairings(self):
         return [
-            (0,3),
-            (3,2),
-            (2,1),
-            (1,0)]
+            (0, 3),
+            (3, 2),
+            (2, 1),
+            (1, 0)]
     
-    def across_pass_pairings(self):
+    def get_across_pass_pairings(self):
         return [
-            (0,2),
-            (2,0),
-            (1,3),
-            (3,1)]
+            (0, 2),
+            (2, 0),
+            (1, 3),
+            (3, 1)]
     
     def pass_cards(self):
-        passPairings = self.passingVariants[self.passingDirection]
+        passPairings = self.passingVariants[self.currentPassingDirection]
         self.map_pass_pairings(passPairings)
         pass            
     
@@ -258,6 +281,7 @@ class Hearts(object):
         self.NUM_PLAYERS = 4
         self.twoOfClubs = Card('2', 'c')
         self.endingConditionNumberOfPoints = 100
+        self.startingNumberOfCards = 13
         
         # class variables
         self.players = [Player(playerNumber) for playerNumber in xrange(self.NUM_PLAYERS)]
@@ -270,39 +294,63 @@ class Hearts(object):
         self.Deck    = Deck()
         self.Scoring = Scoring()
         self.Passing = PassingCards()
-    
+
+    def reset_game(self):
+        self.players = [Player(playerNumber) for playerNumber in xrange(self.NUM_PLAYERS)]
+        self.playerWhoStartsHand = 0
+        self.currentHandNumber = 1
+
     def reset_for_next_round(self):
-        self.Deck.reset_deck()
         for player in self.players:
             player.reset_for_next_round()
+        self.Deck.reset_deck()
+        self.deal_cards_to_players()
         self.turnPile = []
         self.currentHandNumber = 1
-    
+
+    def deal_cards_to_players(self):
+        for _ in xrange(self.startingNumberOfCards):
+            for player in self.players:
+                player.add_card_to_hand(self.Deck.deal_one_card())
+        assert len(self.Deck.deck) == 0
+
     def is_game_over(self):
-        return max([player.score for player in self.players]) < self.endingConditionNumberOfPoints
+        return max([player.score for player in self.players]) > self.endingConditionNumberOfPoints
             
-    def play_game(self):
+    def play_game(self, verbose = False):
         while not self.is_game_over():
             self.play_round()
-            for player in sorted(self.players, key = lambda : self.players.score):
-                print 'Player {} score: {}'.formate(player.playerNumber, player.score)
-        
+            if verbose:
+                for player in sorted(self.players, key=lambda p: p.score):
+                    print 'Player {} score: {}'.format(player.playerNumber, player.score)
+
+        print ['Player {} score: {}'.format(player.playerNumber, player.score) for player in sorted(self.players, key=lambda p: p.score)]
+
+    def score_round(self):
+        totalPointsInRound = 0
+        for player in self.players:
+            scoreThisRound = self.Scoring.score_hand(player.pileOfCardsWon)
+            player.score += scoreThisRound
+            totalPointsInRound += scoreThisRound
+
+        assert totalPointsInRound == 26 or totalPointsInRound == -26
+
     def play_round(self):
         self.reset_for_next_round()
         self.play_all_hands_of_round()
-        pass
+        self.score_round()
         
     def get_winning_card(self):
         assert self.turnPile
         firstCardPlayed = self.turnPile[0]
         declaredSuit = firstCardPlayed.suit
-        return sorted(self.turnPile, key = lambda card: self.Deck.get_ranking_of_card(declaredSuit, card))[-1]
+        return sorted(self.turnPile, key=lambda card: self.Deck.get_ranking_of_card(declaredSuit, card))[-1]
     
     def get_position_of_winning_card(self):
         winningCard = self.get_winning_card()
         return self.turnPile.index(winningCard)
     
-    def get_winning_player_number(self, winningCardPosition):
+    def get_position_of_winning_player(self, winningCardPosition):
         orderOfPlayersForThisHand = self.turnOrderings[self.playerWhoStartsHand]        
         return orderOfPlayersForThisHand[winningCardPosition]    
         
@@ -310,7 +358,7 @@ class Hearts(object):
         winningCardPosition = self.get_position_of_winning_card()
         winningPlayerPosition = self.get_position_of_winning_player(winningCardPosition)
         winningPlayer = self.players[winningPlayerPosition]
-        assert winningPlayer.playerPosition == winningPlayerPosition
+        assert winningPlayer.playerNumber == winningPlayerPosition
         return winningPlayer
     
     def play_all_four_cards_of_hand(self):
@@ -324,6 +372,7 @@ class Hearts(object):
         self.play_all_four_cards_of_hand()
         winningPlayer = self.get_winning_player_of_hand()
         winningPlayer.add_cards_to_won_pile(self.turnPile)
+        self.turnPile = []
         self.playerWhoStartsHand = winningPlayer.playerNumber
         
     def play_first_hand(self):
@@ -332,7 +381,7 @@ class Hearts(object):
         self.play_hand()
 
     def play_remaining_hands(self):
-        while self.currentRoundNumber <= 13:
+        while self.currentHandNumber <= 13:
             self.play_hand()
     
     def play_all_hands_of_round(self):
@@ -347,12 +396,16 @@ class Hearts(object):
             
     def create_turn_orderings(self):
         return {
-            0: [0,1,2,3],
-            1: [1,2,3,0],
-            2: [2,3,0,1],
-            3: [3,0,1,2]}
-            
-    
+            0: [0, 1, 2, 3],
+            1: [1, 2, 3, 0],
+            2: [2, 3, 0, 1],
+            3: [3, 0, 1, 2]}
+
+    def simulate_games(self, numGames = 100):
+        for _ in xrange(numGames):
+            self.play_game()
+            self.reset_game()
+
 class Tests(object):
     def __init__(self):
         self.queenOfSpades = Card('Q', 's')
@@ -362,7 +415,12 @@ class Tests(object):
         self.player        = Player(0)
         self.passingCards  = PassingCards()
         self.hearts        = Hearts()
-    
+
+    def run_tests(self):
+        self.test_deck()
+
+    def test_deck(self):
+        assert self.deck.get_num_cards_in_deck() == 52
         
 test = Tests()
         
@@ -388,4 +446,7 @@ at the end of every round,
         Clean up terminology: Hand vs Round     
         
 '''
+
+Hearts().play_game()
+# cProfile.run('Hearts().simulate_games()')
 
