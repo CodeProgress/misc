@@ -1,6 +1,7 @@
 # Hearts
 import itertools
 import random
+import unittest
 # import cProfile
 
 
@@ -103,7 +104,9 @@ class Hand(object):
     def reset(self):
         self.hand = {'h': {}, 's': {}, 'c': {}, 'd': {}}
             
-    
+    def num_cards_in_hand(self):
+        return sum(len(self.hand[suit]) for suit in self.hand)
+
 class Scoring(object):
     def __init__(self):
         self.HEART_POINT_VALUE = 1
@@ -157,7 +160,6 @@ class Scoring(object):
         assert totalPointsInRound == 26 or totalPointsInRound == 26*3
 
 
-    
 class Player(object):
     def __init__(self, playerNumber):
         self.playerNumber = playerNumber
@@ -398,6 +400,9 @@ class Hearts(object):
         winningPlayer.add_cards_to_won_pile(self.turnPile)
         self.turnPile = []
         self.playerWhoStartsHand = winningPlayer.playerNumber
+        # Test that the total number of cards won + total cards left to be played = 52
+        assert sum(p.pileOfCardsWon.num_cards_in_hand() for p in self.players) \
+            + sum(player.hand.num_cards_in_hand() for player in self.players) == 52
         
     def play_first_hand(self):
         self.Passing.execute_passing_phase(self.players)
@@ -432,8 +437,8 @@ class Hearts(object):
             self.reset_game()
 
 
-class Tests(object):
-    def __init__(self):
+class Tests(unittest.TestCase):
+    def reset_all(self):
         self.queenOfSpades = Card('Q', 's')
         self.deck = Deck()
         self.hand = Hand()
@@ -442,50 +447,49 @@ class Tests(object):
         self.passingCards = PassingCards()
         self.hearts = Hearts()
 
-    def run_tests(self):
-        self.test_deck()
-
-    def test_deck(self):
+    def test_deck_length(self):
+        self.reset_all()
         assert self.deck.get_num_cards_in_deck() == 52
-        
-test = Tests()
-        
-# invariants to test for when testing mode is on
-'''
-at the end of every round, 
-    discard pile goes up by 4
-    each player's hand goes down by 1
-    game pile for turn never has more than 4 cards
-'''
+
+    def test_high_and_low_scores(self, numGames=100, verbose=False):
+        self.reset_all()
+        newGame = self.hearts
+        highestScore = 0
+        lowestScore = 124
+        for i in xrange(numGames):
+            finalScores = newGame.play_game()
+            if finalScores[0] < lowestScore:
+                lowestScore = finalScores[0]
+                if verbose:
+                    print [player.score for player in sorted(newGame.players, key=lambda p: p.score)]
+            if finalScores[3] > highestScore:
+                highestScore = finalScores[3]
+                if verbose:
+                    print [player.score for player in sorted(newGame.players, key=lambda p: p.score)]
+            assert lowestScore >= 0
+            assert highestScore <= 125
+            newGame.reset_game()
+
+        assert lowestScore < highestScore
+        return [lowestScore, highestScore]
+
+    def test_scoring_moon_shot(self):
+        self.reset_all()
+        assert self.scoring.is_moon_shot([26, 0, 0, 0])
+        assert self.scoring.is_moon_shot([0, 26, 0, 0])
+        assert self.scoring.is_moon_shot([0, 0, 26, 0])
+        assert self.scoring.is_moon_shot([0, 0, 0, 26])
+        assert self.scoring.convertedMoonShotScores([26, 0, 0, 0]) == [0, 26, 26, 26]
+        assert self.scoring.convertedMoonShotScores([0, 26, 0, 0]) == [26, 0, 26, 26]
+        assert self.scoring.convertedMoonShotScores([0, 0, 26, 0]) == [26, 26, 0, 26]
+        assert self.scoring.convertedMoonShotScores([0, 0, 0, 26]) == [26, 26, 26, 0]
+
+        assert not self.scoring.is_moon_shot([13, 13, 0, 0])
+        assert not self.scoring.is_moon_shot([13, 11, 1, 1])
+        assert not self.scoring.is_moon_shot([13, 3, 0, 0])
+        # self.assertRaises()
 
 
-'''
-    Concept inventory:
-        Select three cards
-        Direction to pass cards
-            left, right, across, keep
-        
-'''
+unittest.main()
 
-'''
-    To do:
-        Clean up terminology: Hand vs Round     
-        
-'''
-
-newGame = Hearts()
-highestScore = 0
-lowestScore = 124
-for i in xrange(10000):
-    finalScores = newGame.play_game()
-    if finalScores[0] < lowestScore:
-        lowestScore = finalScores[0]
-        print [player.score for player in sorted(newGame.players, key=lambda p: p.score)]
-    if finalScores[3] > highestScore:
-        highestScore = finalScores[3]
-        print [player.score for player in sorted(newGame.players, key=lambda p: p.score)]
-
-    newGame.reset_game()
-
-print lowestScore, highestScore
 # cProfile.run('Hearts().simulate_games()')
