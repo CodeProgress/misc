@@ -487,8 +487,21 @@ class Tests(unittest.TestCase):
         assert not self.scoring.is_moon_shot([13, 13, 0, 0])
         assert not self.scoring.is_moon_shot([13, 11, 1, 1])
         assert not self.scoring.is_moon_shot([13, 3, 0, 0])
-        # self.assertRaises()
 
+    def add_cards_to_players_won_cards(self, listOfCardsWonPerPlayer):
+        assert len(listOfCardsWonPerPlayer) == len(self.hearts.players) == 4
+        index = 0
+        for player in self.hearts.players:
+            player.add_cards_to_won_pile(listOfCardsWonPerPlayer[index])
+            index += 1
+
+    def test_scoring_round(self):
+        self.reset_all()
+        self.add_cards_to_players_won_cards([self.deck.deck[::], self.deck.deck[::], self.deck.deck[::], self.deck.deck[::]])
+        with self.assertRaises(AssertionError):
+            self.scoring.score_round(self.hearts.players)
+        
+        
 
 unittest.main()
 
