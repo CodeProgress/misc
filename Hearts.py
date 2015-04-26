@@ -510,6 +510,22 @@ class Tests(unittest.TestCase):
         self.scoring.score_round(self.hearts.players)
         self.assertEquals(26, self.get_player_score(0) + self.get_player_score(1) + self.get_player_score(2) + self.get_player_score(3))
 
+    def test_starting_conditions(self):
+        self.reset_all()
+        self.assertEquals(4, self.hearts.NUM_PLAYERS)
+        self.assertEquals('c', self.hearts.twoOfClubs.suit)
+        self.assertEquals('2', self.hearts.twoOfClubs.rank)
+        self.assertEquals(100, self.hearts.endingConditionNumberOfPoints)
+        self.assertEquals(13, self.hearts.startingNumberOfCards)
+        
+        # class variables
+        self.assertEquals(4, len(self.hearts.players))
+        self.assertEquals(0, self.hearts.playerWhoStartsHand)
+        self.assertEquals([], self.hearts.turnPile)
+        self.assertEquals(1, self.hearts.currentHandNumber)
+        
+        
+
 unittest.main()
 
 # cProfile.run('Hearts().simulate_games()')
