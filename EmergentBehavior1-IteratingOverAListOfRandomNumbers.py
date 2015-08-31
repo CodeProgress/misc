@@ -1,11 +1,11 @@
 import random
 import collections
 
-numTrials = 2
-numValues = 10
-aList = range(numValues)
-
+numTrials = 1000000
+numValues = 20
 counter = collections.Counter()
+
+aList = range(numValues)
 
 for trial in xrange(numTrials):
     for i in aList:
