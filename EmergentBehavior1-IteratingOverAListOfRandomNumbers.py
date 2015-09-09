@@ -1,9 +1,14 @@
 import random
 import collections
+import pylab as pl
 
-numTrials = 1000000
+def increment_outcome_array(array, x_index, y_value):
+    array[x_index][y_value] += 1
+
+numTrials = 1000
 numValues = 20
 counter = collections.Counter()
+outcomeArray = pl.array([[0]*numValues for i in range(numValues)])
 
 aList = range(numValues)
 
@@ -11,9 +16,15 @@ for trial in xrange(numTrials):
     for i in aList:
         aList[i] = random.randint(0, numValues-1)
 
+    for finalIndex, val in enumerate(aList):
+        increment_outcome_array(outcomeArray, finalIndex, val)
+    
     counter.update(aList)
 
 print counter
+pl.pcolor(outcomeArray)
+pl.colorbar()
+pl.show()
 
 
 '''
