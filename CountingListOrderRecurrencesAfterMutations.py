@@ -10,7 +10,6 @@ def num_successful_matches(numElements, numTrials = 100000):
     
     numSuccessfulMatches = 0
     
-    
     for trial in range(numTrials):
         # mutate the list
         for index, value in enumerate(aList):
@@ -24,10 +23,17 @@ def num_successful_matches(numElements, numTrials = 100000):
     
     return numSuccessfulMatches
 
+
+numElements = 10
 outcomes = []
-for i in range(11):
+for i in range(1, numElements+1):
     outcomes.append(num_successful_matches(i))
 
-pylab.plot(outcomes)
-
+pylab.plot(range(1, numElements+1), outcomes)
+pylab.xlabel("Number of Elements in List")
+pylab.ylabel("Number of Recurrences")
 pylab.show()
+
+
+# maybe track how many digits are out of place during each loop and watch it
+# fluctuate on its way to the match
