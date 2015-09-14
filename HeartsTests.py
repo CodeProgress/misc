@@ -87,7 +87,12 @@ class Tests(unittest.TestCase):
         self.assertEquals(0, self.hearts.playerWhoStartsHand)
         self.assertEquals([], self.hearts.turnPile)
         self.assertEquals(1, self.hearts.currentHandNumber)
-        
-        
+    
+    def test_valid_outcomes(self):
+        self.reset_all()
+        outcomes = self.hearts.simulate_games()
+        for outcome in outcomes:
+            assert max(outcome) >= 100
+            assert min(outcome) >= 0
 
 unittest.main()

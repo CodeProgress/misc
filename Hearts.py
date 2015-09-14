@@ -431,10 +431,12 @@ class Hearts(object):
             3: [3, 0, 1, 2]}
 
     def simulate_games(self, numGames=100):
+        outcomes = []
         for _ in xrange(numGames):
-            self.play_game()
+            outcomes.append(self.play_game())
             self.reset_game()
+        return outcomes
+
+print Hearts().simulate_games()
 
 
-
-cProfile.run('Hearts().simulate_games()')
