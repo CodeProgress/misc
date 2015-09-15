@@ -94,5 +94,34 @@ class Tests(unittest.TestCase):
         for outcome in outcomes:
             assert max(outcome) >= 100
             assert min(outcome) >= 0
+            
+    def set_players_scores(self, aListOfFourScores):
+        assert len(aListOfFourScores) == 4
+        for i, score in enumerate(aListOfFourScores):
+            self.hearts.players[i].score = score
+            
+    def test_game_over_conditions(self):
+        self.reset_all()
+        
+        # Game that are NOT over
+        self.set_players_scores([0,0,0,0])
+        self.assertFalse(self.hearts.is_game_over())
+
+        self.set_players_scores([10,30,40,30])
+        self.assertFalse(self.hearts.is_game_over())
+
+        self.set_players_scores([99,99,99,99])
+        self.assertFalse(self.hearts.is_game_over())
+
+        # Games that are over
+        self.set_players_scores([0,0,0,100])
+        self.assertTrue(self.hearts.is_game_over())
+
+        self.set_players_scores([100,100,100,100])
+        self.assertTrue(self.hearts.is_game_over())
+
+        self.set_players_scores([10,0,23,120])
+        self.assertTrue(self.hearts.is_game_over())
+        
 
 unittest.main()
