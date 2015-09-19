@@ -9,6 +9,12 @@ class Card(object):
         self.rank = rank
         self.suit = suit
     
+    def is_heart(self):
+        return self.suit == 'h'
+    
+    def is_queen_of_spades(self):
+        return self.suit == 's' and self.rank == 'Q'
+    
     def __str__(self):
         return self.rank + self.suit
 
@@ -68,12 +74,16 @@ class Hand(object):
             return False
         return True
     
-    def get_token_card_for_testing(self):
+    def get_token_card_for_testing(self, isFirstHand=False):
         for suit in self.hand.keys():
-            if len(self.hand[suit]) > 0:
-                return self.hand[suit].popitem()[-1]
-        raise(KeyError, 'There are no cards in the hand')
-    
+            for card in self.hand[suit]:
+                possibleCard = self.hand[suit][card]
+                if isFirstHand and (possibleCard.is_heart() or possibleCard.is_queen_of_spades()):
+                    continue
+                else:
+                    return self.hand[suit].pop(card)
+        raise(KeyError, 'There are no cards in the hand') 
+            
     def get_token_suit_card_for_testing(self, suit):
         return self.hand[suit].popitem()[-1]
     
@@ -209,9 +219,15 @@ class Player(object):
         
         return selectedCardToPlay
         
-    def get_card_for_testing(self, suit):
+    def play_a_specific_card(self, aCard):
+        assert self.hand.is_card_in_hand(aCard)
+        return self.hand.get_card(aCard)
+        
+    def get_card_for_testing(self, suit, isFirstHand=False):
         if suit and self.hand.is_suit_in_hand(suit):
             return self.hand.get_token_suit_card_for_testing(suit)
+        if isFirstHand:
+            return self.hand.get_token_card_for_testing(True)
         return self.hand.get_token_card_for_testing()
     
     def reset_for_next_round(self):
@@ -387,13 +403,17 @@ class Hearts(object):
         return winningPlayer
     
     def play_all_four_cards_of_hand(self):
-        for positionOfCurrentPlayerToMove in self.turnOrderings[self.playerWhoStartsHand]:
+        for i, positionOfCurrentPlayerToMove in enumerate(self.turnOrderings[self.playerWhoStartsHand]):
             currentPlayerToMove = self.players[positionOfCurrentPlayerToMove]
-            selectedCard = currentPlayerToMove.play_card(self.turnPile)
+            if self.currentHandNumber == 1 and i == 0:
+                selectedCard = currentPlayerToMove.play_a_specific_card(self.twoOfClubs)
+            elif self.currentHandNumber == 1:
+                selectedCard = currentPlayerToMove.get_card_for_testing('c', True)
+            else:
+                selectedCard = currentPlayerToMove.play_card(self.turnPile)
             self.turnPile.append(selectedCard)
             
     def play_hand(self):
-        self.currentHandNumber += 1
         self.play_all_four_cards_of_hand()
         winningPlayer = self.get_winning_player_of_hand()
         winningPlayer.add_cards_to_won_pile(self.turnPile)
@@ -402,6 +422,7 @@ class Hearts(object):
         # Test that the total number of cards won + total cards left to be played = 52
         assert sum(p.pileOfCardsWon.num_cards_in_hand() for p in self.players) \
             + sum(player.hand.num_cards_in_hand() for player in self.players) == 52
+        self.currentHandNumber += 1
         
     def play_first_hand(self):
         self.Passing.execute_passing_phase(self.players)
@@ -437,6 +458,6 @@ class Hearts(object):
             self.reset_game()
         return outcomes
 
-print Hearts().simulate_games()
+Hearts().simulate_games()
 
 
