@@ -123,5 +123,12 @@ class Tests(unittest.TestCase):
         self.set_players_scores([10,0,23,120])
         self.assertTrue(self.hearts.is_game_over())
         
+    def test_first_round(self):
+        self.reset_all()
+        self.hearts.reset_for_next_round()
+        self.hearts.play_first_hand()
+        for p in self.hearts.players:
+            assert p.hand.num_cards_in_hand() == 12
+        
 
 unittest.main()
