@@ -137,7 +137,33 @@ class Tests(unittest.TestCase):
             for p in self.hearts.players:
                 assert p.hand.num_cards_in_hand() == 12
                 assert not p.hand.is_card_in_hand(self.hearts.twoOfClubs)
-            
+    
+    @staticmethod
+    def check_if_players_cards_contains_pass_pile(passPile, player):
+        return all(player.hand.is_card_in_hand(x) for x in passPile)
+    
+    def test_passing_cards(self):
+        self.reset_all()
+        self.hearts.reset_game()
+        self.hearts.reset_for_next_round()
+        for player in self.hearts.players:
+            self.hearts.Passing.add_three_cards_to_passing_pile(player)
+        playerOne, playerTwo, playerThree, playerFour = self.hearts.players
+        pileOne, pileTwo, pileThree, pileFour = [player.passPile for player in self.hearts.players]
+        self.hearts.Passing.execute_passing_phase(self.hearts.players)
+        
+        assert self.check_if_players_cards_contains_pass_pile(pileOne, playerTwo)
+        assert self.check_if_players_cards_contains_pass_pile(pileTwo, playerThree)
+        assert self.check_if_players_cards_contains_pass_pile(pileThree, playerFour)
+        assert self.check_if_players_cards_contains_pass_pile(pileFour, playerOne)    
+        
+        
+        
+        
+        # left
+        # right
+        # across
+        # don't pass
             
 
 unittest.main()
