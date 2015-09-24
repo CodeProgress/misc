@@ -146,11 +146,16 @@ class Tests(unittest.TestCase):
         self.reset_all()
         self.hearts.reset_game()
         self.hearts.reset_for_next_round()
-        for player in self.hearts.players:
-            self.hearts.Passing.add_three_cards_to_passing_pile(player)
+
+        self.hearts.Passing.execute_passing_phase(self.hearts.players)
+
+        assert all((len(player.passPile) == 3) for player in self.hearts.players)
+
         playerOne, playerTwo, playerThree, playerFour = self.hearts.players
         pileOne, pileTwo, pileThree, pileFour = [player.passPile for player in self.hearts.players]
-        self.hearts.Passing.execute_passing_phase(self.hearts.players)
+        
+        print playerOne.hand, playerTwo, playerThree, playerFour
+        print pileOne, pileTwo, pileThree, pileFour
         
         assert self.check_if_players_cards_contains_pass_pile(pileOne, playerTwo)
         assert self.check_if_players_cards_contains_pass_pile(pileTwo, playerThree)
