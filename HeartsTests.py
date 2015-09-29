@@ -143,32 +143,50 @@ class Tests(unittest.TestCase):
         return all(player.hand.is_card_in_hand(x) for x in passPile)
     
     def test_passing_cards(self):
+        directions = ['left', 'right', 'across', 'noPass']
+        
         self.reset_all()
         self.hearts.reset_game()
-        self.hearts.reset_for_next_round()
 
-        self.hearts.Passing.execute_passing_phase(self.hearts.players)
-
-        assert all((len(player.passPile) == 3) for player in self.hearts.players)
-
-        playerOne, playerTwo, playerThree, playerFour = self.hearts.players
-        pileOne, pileTwo, pileThree, pileFour = [player.passPile for player in self.hearts.players]
-        
-        print playerOne.hand, playerTwo, playerThree, playerFour
-        print pileOne, pileTwo, pileThree, pileFour
-        
-        assert self.check_if_players_cards_contains_pass_pile(pileOne, playerTwo)
-        assert self.check_if_players_cards_contains_pass_pile(pileTwo, playerThree)
-        assert self.check_if_players_cards_contains_pass_pile(pileThree, playerFour)
-        assert self.check_if_players_cards_contains_pass_pile(pileFour, playerOne)    
-        
-        
-        
-        
-        # left
-        # right
-        # across
-        # don't pass
+        for direction in directions:
+            self.hearts.reset_for_next_round()
+    
+            self.hearts.Passing.players = self.hearts.players
+            if self.hearts.Passing.is_passing_round():
+                self.hearts.Passing.all_players_select_three_cards() 
+                assert all((len(player.passPile) == 3) for player in self.hearts.players)
+    
+            playerOne, playerTwo, playerThree, playerFour = self.hearts.players
+            pileOne, pileTwo, pileThree, pileFour = [player.passPile for player in self.hearts.players]
             
+            self.hearts.Passing.pass_cards()
+            
+            if direction == 'left':
+                assert self.check_if_players_cards_contains_pass_pile(pileOne, playerTwo)
+                assert self.check_if_players_cards_contains_pass_pile(pileTwo, playerThree)
+                assert self.check_if_players_cards_contains_pass_pile(pileThree, playerFour)
+                assert self.check_if_players_cards_contains_pass_pile(pileFour, playerOne)    
+            elif direction == 'right':
+                assert self.check_if_players_cards_contains_pass_pile(pileOne, playerFour)
+                assert self.check_if_players_cards_contains_pass_pile(pileTwo, playerOne)
+                assert self.check_if_players_cards_contains_pass_pile(pileThree, playerTwo)
+                assert self.check_if_players_cards_contains_pass_pile(pileFour, playerThree)
+            elif direction == 'across':
+                assert self.check_if_players_cards_contains_pass_pile(pileOne, playerThree)
+                assert self.check_if_players_cards_contains_pass_pile(pileTwo, playerFour)
+                assert self.check_if_players_cards_contains_pass_pile(pileThree, playerOne)
+                assert self.check_if_players_cards_contains_pass_pile(pileFour, playerTwo) 
+            elif direction == 'noPass':
+                self.assertEquals(len(pileOne), 0)
+                self.assertEquals(len(pileTwo), 0)
+                self.assertEquals(len(pileThree), 0)
+                self.assertEquals(len(pileFour), 0)
+                self.assertEquals(playerOne.hand.num_cards_in_hand(), 13)
+                self.assertEquals(playerTwo.hand.num_cards_in_hand(), 13)
+                self.assertEquals(playerThree.hand.num_cards_in_hand(), 13)
+                self.assertEquals(playerFour.hand.num_cards_in_hand(), 13)
+
+            self.hearts.Passing.change_pass_direction()
+        
 
 unittest.main()
