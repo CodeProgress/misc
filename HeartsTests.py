@@ -142,6 +142,34 @@ class Tests(unittest.TestCase):
     def check_if_players_cards_contains_pass_pile(passPile, player):
         return all(player.hand.is_card_in_hand(x) for x in passPile)
     
+    def create_pass_check_ordering(self, direction, piles, players):
+        assert len(piles) == len(players) == 4
+        pileOne, pileTwo, pileThree, pileFour = piles
+        playerOne, playerTwo, playerThree, playerFour = players
+        
+        if direction == 'left':
+            return [(pileOne, playerTwo), (pileTwo, playerThree), (pileThree, playerFour), (pileFour, playerOne)]
+
+        elif direction == 'right':
+            return [(pileOne, playerFour), (pileTwo, playerOne), (pileThree, playerTwo), (pileFour, playerThree)]
+            
+        elif direction == 'across':
+            return [(pileOne, playerThree), (pileTwo, playerFour), (pileThree, playerOne), (pileFour, playerTwo)]
+        
+        elif direction == 'noPass':  # piles will be empty, this is just to check player pile is still 13
+            return [(pileOne, playerOne), (pileTwo, playerTwo), (pileThree, playerThree), (pileFour, playerFour)]
+        else:
+            raise ValueError("Invalid direction parameter")
+    
+    def check_all_passes_between_players(self, listOfPasserPileReceiverTuples):
+        '''ex: [(passerPile1, receiver1), (passerPile2, receiver2), (passerPile3, receiver3), (passerPile4, receiver4)]'''
+        
+        for PasserPileReceiverTuple in listOfPasserPileReceiverTuples:
+            passerPile = PasserPileReceiverTuple[0]
+            receiver = PasserPileReceiverTuple[1]
+            assert self.check_if_players_cards_contains_pass_pile(passerPile, receiver)
+            self.assertEquals(13, receiver.hand.num_cards_in_hand())
+    
     def test_passing_cards(self):
         directions = ['left', 'right', 'across', 'noPass']
         
@@ -156,35 +184,13 @@ class Tests(unittest.TestCase):
                 self.hearts.Passing.all_players_select_three_cards() 
                 assert all((len(player.passPile) == 3) for player in self.hearts.players)
     
-            playerOne, playerTwo, playerThree, playerFour = self.hearts.players
-            pileOne, pileTwo, pileThree, pileFour = [player.passPile for player in self.hearts.players]
+            piles = [player.passPile for player in self.hearts.players]
+            players = self.hearts.players
             
             self.hearts.Passing.pass_cards()
             
-            if direction == 'left':
-                assert self.check_if_players_cards_contains_pass_pile(pileOne, playerTwo)
-                assert self.check_if_players_cards_contains_pass_pile(pileTwo, playerThree)
-                assert self.check_if_players_cards_contains_pass_pile(pileThree, playerFour)
-                assert self.check_if_players_cards_contains_pass_pile(pileFour, playerOne)    
-            elif direction == 'right':
-                assert self.check_if_players_cards_contains_pass_pile(pileOne, playerFour)
-                assert self.check_if_players_cards_contains_pass_pile(pileTwo, playerOne)
-                assert self.check_if_players_cards_contains_pass_pile(pileThree, playerTwo)
-                assert self.check_if_players_cards_contains_pass_pile(pileFour, playerThree)
-            elif direction == 'across':
-                assert self.check_if_players_cards_contains_pass_pile(pileOne, playerThree)
-                assert self.check_if_players_cards_contains_pass_pile(pileTwo, playerFour)
-                assert self.check_if_players_cards_contains_pass_pile(pileThree, playerOne)
-                assert self.check_if_players_cards_contains_pass_pile(pileFour, playerTwo) 
-            elif direction == 'noPass':
-                self.assertEquals(len(pileOne), 0)
-                self.assertEquals(len(pileTwo), 0)
-                self.assertEquals(len(pileThree), 0)
-                self.assertEquals(len(pileFour), 0)
-                self.assertEquals(playerOne.hand.num_cards_in_hand(), 13)
-                self.assertEquals(playerTwo.hand.num_cards_in_hand(), 13)
-                self.assertEquals(playerThree.hand.num_cards_in_hand(), 13)
-                self.assertEquals(playerFour.hand.num_cards_in_hand(), 13)
+            listOfPasserPileReceiverTuples = self.create_pass_check_ordering(direction, piles, players)
+            self.check_all_passes_between_players(listOfPasserPileReceiverTuples)
 
             self.hearts.Passing.change_pass_direction()
         
