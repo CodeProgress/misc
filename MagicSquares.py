@@ -32,6 +32,7 @@ class MagicGrid(object):
         return MagicSquare(*self.create_random_directions())
 
     def __repr__(self):
+        # refactor...
         allBoxes = []
         for row in range(self.sideLength):
             boxesInRow = []
@@ -48,10 +49,13 @@ class MagicGrid(object):
         reorderedAllBoxes = []
         for row in range(self.sideLength):
             reorderedAllBoxes.append(zip(*[allBoxes[row][x] for x in range(self.sideLength)]))
+        
+        finalString = ''
+        for i in reorderedAllBoxes:
+            for j in i:
+                finalString += ''.join(j) + '\n'
+        return finalString
 
-        pprint.pprint(reorderedAllBoxes)
-        return 'To be completed...'
-
-ms = MagicGrid(3)
+ms = MagicGrid(4)
 
 print ms
