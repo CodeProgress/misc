@@ -12,13 +12,24 @@ class MagicSquare(object):
 
 class MagicGrid(object):
     def __init__(self, sideLength):
+        # preconditions
         assert sideLength >= 1
+
+        # variables
         self.sideLength = sideLength
         self.square = [[None] * sideLength for _ in range(sideLength)]
         self.directions = ['North', 'East', 'South', 'West']
-        self.create_magic_squares()
         self.start = (0,0)
-        self.end = (self.sideLength, self.sideLength)
+        self.end = (self.sideLength-1 , self.sideLength-1)
+        self.allDestinationSquares = set()# note: this is different than 'possible' destination squares
+
+        # methods
+        self.create_magic_squares()
+
+        # postconditions
+        assert self.sideLength >= 1
+        assert self.end > self.start
+
 
     def create_magic_squares(self):
         for row in range(self.sideLength):
@@ -26,10 +37,22 @@ class MagicGrid(object):
                 self.square[row][col] = self.create_magic_square()
 
     def create_random_directions(self):
-        return [(random.randint(0, self.sideLength-1), random.randint(0, self.sideLength-1)) for _ in self.directions]
+        randomDirections = []
+        for _ in self.directions:
+            row = random.randint(0, self.sideLength-1)
+            col = random.randint(0, self.sideLength-1)
+            coord = (row, col)
+            randomDirections.append(coord)
+            self.allDestinationSquares.add(coord)
+        return randomDirections
 
     def create_magic_square(self):
         return MagicSquare(*self.create_random_directions())
+
+    def is_ending_square_in_destination_squares(self):
+        # 100,000 trials percent chance of True:
+        #     size 8: 98.331, 7: 98.209, 6: 98.214, 5: 98.377 %, 4: 98.454 %, 3: 98.481 %, 2: 98.982
+        return ms.end in ms.allDestinationSquares
 
     def __repr__(self):
         # refactor...
@@ -56,6 +79,13 @@ class MagicGrid(object):
                 finalString += ''.join(j) + '\n'
         return finalString
 
-ms = MagicGrid(4)
+# counter = 0
+# for i in range(1000):
+#     ms = MagicGrid(4)
+#     if ms.is_ending_square_in_destination_squares():
+#         counter += 1
+# print counter
 
+ms = MagicGrid(4)
 print ms
+
