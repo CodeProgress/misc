@@ -4,27 +4,31 @@ import random
 
 class Card(object):
     def __init__(self, rank, suit):
+        assert rank in 'A23456789TJQK'
+        assert suit in 'shdc'
         self.rank = rank
         self.suit = suit
         self.isRed = suit in 'hd'
         self.isBlack = suit in 'sc'
-        assert self.isRed != self.isBlack # assures suit in 'shdc'
+        assert self.isRed != self.isBlack
     
     def __str__(self):
         return self.rank+self.suit
     
+    def areCardsEqual(self, cardToCompare):
+        if type(cardToCompare) != Card: return False
+        return self.rank == cardToCompare.rank and self.suit == cardToCompare.suit
+    
 class Deck(object):
     def __init__(self):
-        self.ranks = set('23456789TJQKA')
-        self.suits = set('shdc')
+        self.ranks = 'A23456789TJQK'
+        self.suits = 'shdc'
         self.deck = [Card(rank, suit) for rank in self.ranks for suit in self.suits]
-
-    def isLegalCard(self, card):
-        return card.rank in self.ranks and card.suit in self.suits
 
 class Pile(object):
     def __init__(self, name, iterable):
         self.pile = (name, iterable)
+        self.indexes = {rank: index for index, rank in enumerate('A23456789TJQK')} 
 
     def getName(self):
         return self.pile[0]
@@ -62,10 +66,20 @@ class Pile(object):
 class DrawPile(Pile):
     def __str__(self):
         return str(self.getName()) + ' ' + str(self.valueOfTopCard())
+
+class GoalPile(Pile):
+    def __init__(self, name, iterable):
+        super(GoalPile, self).__init__(name, iterable)
+
+    def canAdd(self, possibleCard):
+        assert possibleCard.rank in self.indexes
+        if self.isEmpty():
+            return self.indexes[possibleCard.rank] == 0 and possibleCard.suit == self.getName()
+        return self.indexes[possibleCard.rank] - self.indexes[self.valueOfTopCard()] == 1
     
 class AccumPile(Pile):
     def __init__(self, name, iterable, visibilityIndex):
-        self.pile = (name, iterable)
+        super(AccumPile, self).__init__(name, iterable)
         self.visibilityIndex = visibilityIndex
     
     def popFromTopOfPile(self):
@@ -85,6 +99,16 @@ class AccumPile(Pile):
             differentPile.addToTopOfPile(spliceToMove[i])
             self.popFromTopOfPile()
         assert origLenBothPiles == self.size() + differentPile.size()
+    
+    def getVisibleCards(self):
+        return self.getIterable()[self.visibilityIndex:][::]
+    
+    def canNestUnder(self, possibleCard):
+        assert possibleCard.rank in self.indexes
+        if self.isEmpty():
+            return True
+        return (self.indexes[self.valueOfTopCard().getRank()] - self.indexes[possibleCard.rank] == 1) \
+                    and possibleCard.isRed() != self.valueOfTopCard().isRed()
     
     def __str__(self):
         return str(self.getName()) + ' x{} '.format(max(self.visibilityIndex, 0)) + str([str(card) for card in self.getIterable()[self.visibilityIndex:]])
@@ -108,10 +132,10 @@ class Solitaire(object):
         
     def createGoalPiles(self):
         allGoalPiles = []
-        allGoalPiles.append(Pile('s', []))
-        allGoalPiles.append(Pile('h', []))
-        allGoalPiles.append(Pile('d', []))
-        allGoalPiles.append(Pile('c', []))
+        allGoalPiles.append(GoalPile('s', []))
+        allGoalPiles.append(GoalPile('h', []))
+        allGoalPiles.append(GoalPile('d', []))
+        allGoalPiles.append(GoalPile('c', []))
         return allGoalPiles
     
     def createAccumPiles(self):
@@ -128,29 +152,45 @@ class Solitaire(object):
         while not self.isGameOver():
             self.printGameState()
             
-            cardToMove = raw_input("Enter card to move (ex: 3h or flip) ")
-            if cardToMove == 'exit': 
+            cardToMoveText = raw_input("Enter card to move (ex: 3h or flip) ")
+            if cardToMoveText == 'exit': 
                 break
-            elif cardToMove == 'flip':
+            elif cardToMoveText == 'flip':
                 self.flipToNextDrawCard()
                 continue
-            if not self.isLegalCard(cardToMove): 
+            
+            cardToMove = self.createCardToMove(cardToMoveText)
+            
+            if not cardToMove:
+                print "Invalid Move"
+                continue
+            
+            sourcePile = self.getSourcePileOfCardToMove(cardToMove)
+            if not sourcePile: 
                 print "Invalid Move"
                 continue
             
             destinationPile = raw_input("Enter which pile to move card onto (ex: '1') ")
             if destinationPile == 'exit': 
                 break
-            if not self.isLegalDestinationPileName(destinationPile): 
+            if not self.isLegalDestinationPileName(cardToMove, sourcePile, destinationPile): 
                 print "Invalid Pile"
-                continue    
-            if not self.isLegalMove(cardToMove, destinationPile):
-                print "Invalid Move"
                 continue
-        
-            self.playMove(cardToMove, destinationPile)
+            
+            self.playMove(cardToMove, sourcePile, destinationPile)
+            
+            print "Successfully played move!"
 
         self.printGameOutcome()
+    
+    def createCardToMove(self, cardToMoveText):
+        if len(cardToMoveText) != 2: 
+            return None
+        try:
+            possibleCard = Card(cardToMoveText[0], cardToMoveText[1])
+        except AssertionError:
+            return None
+        return possibleCard
     
     def flipToNextDrawCard(self):
         assert not self.drawPile.isEmpty()   
@@ -161,24 +201,31 @@ class Solitaire(object):
             assert self.discardPile.size() == 0
             assert self.drawPile.size() > 0
             self.drawPile.shufflePile()
-        print self.drawPile.size()
-        print self.discardPile.size()
 
-    def isLegalCard(self, cardToMove):
-        if len(cardToMove) != 2: return False
-        possibleCard = Card(cardToMove[0], cardToMove[1])
-        return self.originalDeck.isLegalCard(possibleCard)
+    def getSourcePileOfCardToMove(self, cardToMove):
+        '''returns the name of the pile the card belongs to, unless illegal card, returns None'''
+        if cardToMove.areCardsEqual(self.drawPile.valueOfTopCard()): 
+            return self.drawPile
+        for accumPile in self.accumPiles:
+            for aCard in accumPile.getVisibleCards():
+                if cardToMove.areCardsEqual(aCard):
+                    return accumPile
+        for goalPile in self.goalPiles:
+            if cardToMove.areCardsEqual(goalPile.valueOfTopCard()):
+                return goalPile
+        return None
     
-    def isLegalDestinationPileName(self, destinationPile):
-        if any(x.getName() == destinationPile for x in self.accumPiles):
-            return True
-        if any(y.getName() == destinationPile for y in self.goalPiles):
-            return True
-        return False
-    
-    def isLegalMove(self, cardToMove, destinationPile):
-        # determine where card to move is coming from
-        
+    def isLegalDestinationPileName(self, cardToMove, sourcePile, destinationPile):
+        # if destintion is valid Accum Pile
+        for accumPile in self.accumPiles:
+            if destinationPile == accumPile.getName():
+                return accumPile.canNestUnder(cardToMove)
+                
+        # if destination is valid Goal Pile
+        for goalPile in self.goalPiles:
+            if destinationPile == goalPile.getName():
+                return goalPile.canAdd(cardToMove)
+
         return False
     
     def isGameOver(self):
@@ -188,7 +235,7 @@ class Solitaire(object):
         if self.isWinner: print "Victory!"
         else: print "Better luck next time!"
 
-    def playMove(self, move, destinationPile):
+    def playMove(self, cardToMove, sourcePile, destinationPile):
         
         # drawPile
             # cardName, goalPile: move card to destintion pile
