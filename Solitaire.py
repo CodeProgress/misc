@@ -1,6 +1,8 @@
 #Solitaire 
 
 import random
+from datetime import timedelta
+from time import clock
 
 class Card(object):
     def __init__(self, rank, suit):
@@ -175,6 +177,19 @@ class AccumPile(Pile):
     def __str__(self):
         return str(self.getName()) + ' x{} '.format(max(self.visibilityIndex, 0)) + str([str(card) for card in self.getIterable()[self.visibilityIndex:]])
     
+class Statistics(object):
+    def __init__(self):
+        self.startTime = clock()
+        self.actionCounter = 0
+    
+    def incrementActionCounter(self):
+        self.actionCounter += 1
+    
+    def __str__(self):
+        elapsedTime = clock() - self.startTime
+        elapsedTime = str(timedelta(seconds=int(elapsedTime))) # format
+        return "Elapsed time: {}, Total actions: {}".format(elapsedTime, self.actionCounter)
+    
 class Solitaire(object):
     def __init__(self):
         self.originalDeck = Deck()
@@ -182,6 +197,7 @@ class Solitaire(object):
         self.goalPiles = self.createGoalPiles()
         self.accumPiles = self.createAccumPiles()
         self.isWinner = False
+        self.stats = Statistics()
     
     def createDrawPile(self):
         drawPile = DrawPile('draw', self.originalDeck.deck[::])
@@ -210,6 +226,8 @@ class Solitaire(object):
         while not self.isGameOver():
             self.printGameState()
             self.checkPileTotals(True)
+            self.stats.incrementActionCounter()
+
             cardToMoveText = raw_input("Enter card to move (ex: 3h or f) ")
             if cardToMoveText == 'exit': 
                 break
@@ -291,9 +309,10 @@ class Solitaire(object):
     def printGameOutcome(self):
         self.printGameState()
         if self.isWinner: 
-            print "Victory!"
+            print "Victory!!"
         else: 
             print "Better luck next time!"
+        print self.stats
 
     def playMove(self, cardToMove, sourcePile, destinationPile):
         destinationPile.add(sourcePile.remove(cardToMove))
