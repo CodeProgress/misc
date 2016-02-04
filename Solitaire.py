@@ -232,13 +232,41 @@ class Solitaire(object):
         assert sum(x.size() for x in allAccumPiles) == 28, 'accum piles have incorrect number of cards'
         return allAccumPiles
 
-    def playGame(self):
-        while not self.isGameOver():
-            self.printGameState()
-            self.checkPileTotals(True)
-            self.stats.incrementActionCounter()
+    def getRandomCardText(self):
+        '''return the name of a random visible card (not from goal pile)'''
+        return random.choice(
+            ['f'] 
+            + [str(self.drawPile.valueOfTopCard())] 
+            + [str(accumCard) for accumPile in self.accumPiles for accumCard in accumPile.getVisibleCards()])
 
-            cardToMoveText = raw_input("Enter card to move (ex: 3h or f) ")
+    def getRandomDestinationPileText(self, cardToMove, sourcePile):
+        possibleDestinations = [pile.getName() for pile in self.accumPiles + self.goalPiles]
+        random.shuffle(possibleDestinations)
+        for destination in possibleDestinations:
+            possibleDestination = self.getDestinationPileName(cardToMove, sourcePile, destination)
+            if possibleDestination:
+                return possibleDestination.getName()
+        return None
+        
+
+    def playGame(self, autoPlay = False):
+        if autoPlay: winningMoveSequence = []
+        while not self.isGameOver():
+            #if autoPlay:
+            #    if self.stats.actionCounter % 1000 == 0:
+            #        self.printGameState()
+            #else:
+            #    self.printGameState()
+            self.checkPileTotals((not autoPlay))
+            self.stats.incrementActionCounter()
+            if self.stats.actionCounter > 5000:
+                break
+
+            if autoPlay:
+                cardToMoveText = self.getRandomCardText()
+            else:
+                cardToMoveText = raw_input("Enter card to move (ex: 3h or f) ")
+
             if cardToMoveText == 'exit':
                 break
             elif cardToMoveText == 'f':
@@ -248,28 +276,37 @@ class Solitaire(object):
             cardToMove = self.createCardToMove(cardToMoveText)
 
             if not cardToMove:
-                print "Invalid Move"
+                if not autoPlay: print "Invalid Move"
                 continue
 
             sourcePile = self.getSourcePileOfCardToMove(cardToMove)
             if not sourcePile:
-                print "Invalid Move"
+                if not autoPlay: print "Invalid Move"
                 continue
+            
 
-            destinationPileText = raw_input("Enter which pile to move card onto (ex: '1') ")
+            if autoPlay:
+                destinationPileText = self.getRandomDestinationPileText(cardToMove, sourcePile)
+            else:
+                destinationPileText = raw_input("Enter which pile to move card onto (ex: '1') ")
+
             if destinationPileText == 'exit':
                 break
 
             destinationPile = self.getDestinationPileName(cardToMove, sourcePile, destinationPileText)
             if not destinationPile:
-                print "Invalid Pile"
+                if not autoPlay: print "Invalid Pile"
                 continue
 
             self.playMove(cardToMove, sourcePile, destinationPile)
 
-            print "Successfully played move!"
+            if not autoPlay: print "Successfully played move!"
+            if autoPlay: winningMoveSequence.append((cardToMoveText, destinationPileText))
 
-        self.printGameOutcome()
+        #if autoPlay and self.isGameOver(): print winningMoveSequence
+
+        if not autoPlay: self.printGameOutcome()
+        
 
     def createCardToMove(self, cardToMoveText):
         if len(cardToMoveText) != 2:
@@ -342,5 +379,17 @@ class Solitaire(object):
         if verbose: print drawPileSize, discardPileSize, accumPilesSize, goalPilesSize, totalSize
 
 
-game = Solitaire()
-game.playGame()
+def runSimulations(numTrials):
+    numActionsUntilVictory = []
+    for i in range(numTrials):
+        game = Solitaire()
+        game.playGame(True)
+        print game.stats.actionCounter
+        if game.stats.actionCounter < 5000:
+            numActionsUntilVictory.append(game.stats.actionCounter)
+    
+    print "{}/{} trials were victorious!".format(len(numActionsUntilVictory), numTrials)  
+    return numActionsUntilVictory
+    
+print runSimulations(10)
+
