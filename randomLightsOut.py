@@ -36,18 +36,34 @@ class LightsOut:
             self.flip_square_and_neighbors(self.get_square_from_coordinates(move))
             print self, '\n'
 
+    def are_all_lights_out(self):
+        for row in self.board:
+            for squ in row:
+                if squ.is_on():
+                    return False
+        return True
+
 
 class Square:
+    LIGHT_ON = 'o'
+    LIGHT_OUT = 'x'
+
     def __init__(self, row, col):
-        self.value = 'x'
+        self.value = self.LIGHT_ON
         self.row = row
         self.col = col
 
     def flip(self):
-        if self.value == 'x':
-            self.value = 'o'
+        if self.value == self.LIGHT_OUT:
+            self.value = self.LIGHT_ON
         else:
-            self.value = 'x'
+            self.value = self.LIGHT_OUT
+
+    def is_out(self):
+        return self.value == self.LIGHT_OUT
+
+    def is_on(self):
+        return self.value == self.LIGHT_ON
 
     def get_neighbor_squares_coordinates_to_flip(self):
         north = (self.row + 1, self.col)
@@ -67,17 +83,32 @@ class RandomSquare(Square):
 
     def flip(self):
         if random.random() < self.probability_of_flip:
-            if self.value == 'x':
-                self.value = 'o'
+            if self.value == self.LIGHT_OUT:
+                self.value = self.LIGHT_ON
             else:
-                self.value = 'x'
+                self.value = self.LIGHT_OUT
 
+boardSize = 6
+# game = LightsOut(boardSize, Square)
+game = LightsOut(boardSize, RandomSquare)
 
-game = LightsOut(4, Square)
-randGame = LightsOut(4, RandomSquare)
+# print "Start standard game:"
+# game.print_series_of_moves([(1, 1), (0, 0)])
+#
+# print "Start random game:"
+# randGame.print_series_of_moves([(1, 1), (0, 0)])
 
-print "Start standard game:"
-game.print_series_of_moves([(1, 1), (0, 0)])
-
-print "Start random game:"
-randGame.print_series_of_moves([(1, 1), (0, 0)])
+counter = 0
+while not game.are_all_lights_out():
+    randRow = random.randint(0, boardSize-1)
+    randCol = random.randint(0, boardSize-1)
+    sq = game.get_square_from_coordinates((randRow, randCol))
+    if sq.is_out():
+        continue
+    game.flip_square_and_neighbors(sq)
+    counter += 1
+    if counter % 100000 == 0:
+        print counter
+        print game
+print game
+print counter
