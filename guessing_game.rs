@@ -11,9 +11,10 @@ fn main() {
 
     // println!("The secret number is: {}", secret_number);
 
+    let mut num_guesses: u32 = 7;
     loop {
 
-        println!("Please input your guess.");
+        println!("Please input your guess.\nNumber of guesses remaining: {}", num_guesses);
     
         let mut guess = String::new();
   
@@ -22,7 +23,10 @@ fn main() {
 
         let guess: u32 = match guess.trim().parse() {
             Ok(num) => num,
-            Err(_) => continue,
+            Err(_) => {
+                println!("Please enter a valid number.");
+                continue;
+                }
         };
 
         println!("You guessed: {}", guess);
@@ -35,8 +39,13 @@ fn main() {
                 break;
             }
         }
+        num_guesses -= 1;
+        if num_guesses == 0 {
+            println!("Too many guesses.  Sorry!");
+            break;
+            }
     }
 }
 
-// https://doc.rust-lang.org/book/guessing-game.html
+// adapted from https://doc.rust-lang.org/book/guessing-game.html
 
